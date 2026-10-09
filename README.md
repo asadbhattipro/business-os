@@ -31,3 +31,7 @@ Track qualified sellers, cars inspected, dealers contacted, dealer response rate
 
 ## Current strategic focus
 Validate Cartime's seller-to-dealer bidding process with repeatable evidence before spending heavily on expansion.
+
+
+## Deployment status check
+After changing Pages settings, make a new commit or manually run the workflow from **Actions → Deploy Business OS to GitHub Pages → Run workflow** so the first deployment starts.
