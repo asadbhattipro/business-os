@@ -12,7 +12,7 @@
 </style><script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body><div class="app">
-<header class="top"><div class="brand"><div class="logo">C</div><div><h1>Cartime OS</h1><div class="sub">Build. Test. Learn. Repeat.</div></div></div><div class="actions"><button class="btn" id="exportBtn">Backup</button><button class="btn" id="importBtn">Restore</button><input id="importFile" type="file" accept="application/json" hidden></div></header>
+<header class="top"><div class="brand"><div class="logo">C</div><div><h1>Cartime OS</h1><div class="sub">Build. Test. Learn. Repeat.</div></div></div><div class="actions"><button class="btn primary" id="installBtn" type="button">Install app</button><button class="btn" id="exportBtn">Backup</button><button class="btn" id="importBtn">Restore</button><input id="importFile" type="file" accept="application/json" hidden></div></header>
 
 
 <main class="content">
@@ -113,6 +113,48 @@ loadDriveClientId();
 function exportData(){let b=new Blob([JSON.stringify({app:'Cartime OS',version:2,exportedAt:new Date().toISOString(),data:db},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cartime-os-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')}
 function importData(file){if(!file)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result),n=x.data||x;if(!n||!Array.isArray(n.tasks))throw Error();if(confirm('Replace current data with this backup?')){db={...fresh(),...n};migrate();save();render();toast('Backup restored')}}catch(e){alert('This backup file is not valid.')}};r.readAsText(file)}
 document.getElementById('exportBtn').onclick=exportData;document.getElementById('exportBtn2').onclick=exportData;document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();document.getElementById('importBtn2').onclick=()=>document.getElementById('importFile').click();document.getElementById('importFile').onchange=e=>importData(e.target.files[0]);document.getElementById('resetBtn').onclick=()=>{if(confirm('Permanently clear all Cartime OS data in this browser? Export a backup first.')){db=fresh();migrate();save();render();toast('Data cleared')}};
+
+// Install Cartime OS as a real app (PWA), instead of a home-screen shortcut.
+let deferredInstallPrompt=null;
+const installButton=document.getElementById('installBtn');
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+function refreshInstallButton(){
+  if(!installButton)return;
+  if(isStandalone()){installButton.textContent='App installed';installButton.disabled=true;installButton.title='Cartime OS is running as an installed app';}
+  else{installButton.textContent='Install app';installButton.disabled=false;installButton.title='Install Cartime OS on this device';}
+}
+window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  refreshInstallButton();
+});
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  refreshInstallButton();
+  toast('Cartime OS installed successfully');
+});
+installButton.addEventListener('click',async()=>{
+  if(isStandalone()){toast('Cartime OS is already installed');return;}
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    if(choice&&choice.outcome==='accepted')toast('Install started. Follow your phone prompts.');
+    else toast('Install cancelled. You can try again any time.');
+    refreshInstallButton();
+    return;
+  }
+  const ua=navigator.userAgent||'';
+  if(/iPhone|iPad|iPod/i.test(ua)){
+    alert('iPhone/iPad: Safari mein Cartime OS open karein, Share button tap karein, phir “Add to Home Screen” choose karein.');
+  }else if(/Android/i.test(ua)){
+    alert('Agar install prompt abhi available nahi hai: Chrome mein Cartime OS ka live website open karein, top-right ⋮ menu tap karein, phir “Install app” ya “Add to Home screen” choose karein. Agar sirf shortcut option aaye, kuch seconds wait karke page reload karein.');
+  }else{
+    alert('Install prompt is not available in this browser yet. Open the live HTTPS app in a supported browser (Chrome/Edge) and try again.');
+  }
+});
+refreshInstallButton();
+
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 document.getElementById('taskWeek').value=monday(today());render();
 </script></body></html>
