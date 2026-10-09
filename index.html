@@ -120,7 +120,7 @@ const installButton=document.getElementById('installBtn');
 const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
 function refreshInstallButton(){
   if(!installButton)return;
-  if(isStandalone()){installButton.textContent='App installed';installButton.disabled=true;installButton.title='Cartime OS is running as an installed app';}
+  if(isStandalone()){installButton.hidden=true;installButton.style.display='none';return;}installButton.hidden=false;installButton.style.display='';installButton.textContent='Install app';installButton.disabled=false;installButton.title='Install Cartime OS on this device';
   else{installButton.textContent='Install app';installButton.disabled=false;installButton.title='Install Cartime OS on this device';}
 }
 window.addEventListener('beforeinstallprompt',event=>{
